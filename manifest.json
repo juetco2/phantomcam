@@ -3,6 +3,7 @@
   "name": "PhantomCam — Virtual Camera & Meeting Notes",
   "short_name": "PhantomCam",
   "version": "1.1.0",
+  "minimum_chrome_version": "111",
   "description": "Virtual camera for Google Meet: freeze your feed, loop a short presence clip, and turn live captions into an AI meeting summary.",
   "icons": {
     "16": "icon16.png",

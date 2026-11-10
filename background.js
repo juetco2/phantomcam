@@ -23,8 +23,7 @@ Transcript:
 
 const DEFAULT_SETTINGS = {
   phantomcamFreezeKey: 'F',
-  phantomcamLiveKey: 'L',
-  loopDuration: 15
+  phantomcamLiveKey: 'L'
 };
 
 // Seed defaults without clobbering anything the user has already saved.

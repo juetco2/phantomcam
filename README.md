@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon256.png" width="104" alt="PhantomCam icon">
+</p>
+
 # PhantomCam
 
 **A virtual camera and AI note-taker for Google Meet.**
