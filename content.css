@@ -1,0 +1,471 @@
+/* PhantomCam in-meeting HUD styles */
+#meet-copilot-hud {
+  position: fixed;
+  bottom: 85px;
+  right: 24px;
+  width: 380px;
+  max-height: 560px;
+  background: rgba(34, 30, 34, 0.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(14, 124, 123, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 22px rgba(14, 124, 123, 0.25), inset 0 1px 1px rgba(164, 168, 209, 0.18);
+  z-index: 2147483647 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Plus Jakarta Sans", sans-serif;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Mouse-following radial spotlight highlight on HUD */
+#meet-copilot-hud::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    220px circle at var(--spot-x, -300px) var(--spot-y, -300px),
+    rgba(14, 124, 123, 0.22),
+    rgba(164, 168, 209, 0.08) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+#meet-copilot-hud:hover::before {
+  opacity: 1;
+}
+
+#meet-copilot-hud.minimized {
+  max-height: 52px;
+  width: 270px;
+  border-radius: 26px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(14, 124, 123, 0.35);
+}
+
+#meet-copilot-hud.minimized .mcp-body {
+  max-height: 0;
+  opacity: 0;
+  padding: 0 16px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mcp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(34, 30, 34, 0.98);
+  border-bottom: 1px solid rgba(164, 168, 209, 0.15);
+  cursor: grab;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.mcp-header:active {
+  cursor: grabbing;
+  background: #2b272b;
+}
+
+.mcp-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcp-logo-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: #221E22;
+  border: 1px solid rgba(14, 124, 123, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(14, 124, 123, 0.35);
+  flex-shrink: 0;
+}
+
+.mcp-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mcp-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(14, 124, 123, 0.2);
+  color: #A4A8D1;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid rgba(14, 124, 123, 0.4);
+  transition: all 0.2s ease;
+}
+
+.mcp-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Large, easily clickable Minimize button with generous hit area */
+.mcp-btn-icon {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(164, 168, 209, 0.2);
+  color: #A4A8D1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  outline: none;
+}
+
+/* Expand clickable hitbox by 6px in all directions */
+.mcp-btn-icon::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  cursor: pointer;
+}
+
+.mcp-btn-icon:hover {
+  color: #ffffff;
+  background: rgba(14, 124, 123, 0.3);
+  border-color: rgba(14, 124, 123, 0.6);
+  transform: scale(1.08);
+  box-shadow: 0 0 14px rgba(14, 124, 123, 0.4);
+}
+
+.mcp-btn-icon:active {
+  transform: scale(0.94);
+}
+
+.mcp-icon-svg {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+#meet-copilot-hud .mcp-icon-exp {
+  display: none;
+}
+#meet-copilot-hud.minimized .mcp-icon-min {
+  display: none;
+}
+#meet-copilot-hud.minimized .mcp-icon-exp {
+  display: block;
+}
+
+.mcp-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 490px;
+  transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.3s ease;
+}
+
+/* Camera Actions */
+.mcp-cam-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.65);
+  padding: 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s ease;
+}
+
+.mcp-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Sub-toggle Minimize Button for Transcripts Box */
+.mcp-sub-toggle-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.mcp-sub-toggle-btn::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  cursor: pointer;
+}
+
+.mcp-sub-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateY(-1px);
+}
+
+.mcp-sub-toggle-btn:active {
+  transform: scale(0.96);
+}
+
+.mcp-chevron-svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mcp-sub-toggle-btn.collapsed .mcp-chevron-svg {
+  transform: rotate(-90deg);
+}
+
+.mcp-transcripts-collapsible {
+  max-height: 200px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, margin 0.25s ease;
+}
+
+.mcp-transcripts-collapsible.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.mcp-btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 7px;
+}
+
+.mcp-cam-btn {
+  padding: 8px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  background: #1e293b;
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.mcp-cam-btn:hover {
+  background: rgba(14, 124, 123, 0.2);
+  border-color: rgba(14, 124, 123, 0.45);
+}
+
+.mcp-cam-btn.active {
+  background: #0E7C7B;
+  border-color: #0E7C7B;
+  color: white;
+  box-shadow: 0 0 12px rgba(14, 124, 123, 0.45);
+}
+
+.mcp-cam-btn.btn-freeze.active {
+  background: #A4A8D1;
+  color: #221E22;
+  border-color: #A4A8D1;
+  box-shadow: 0 0 12px rgba(164, 168, 209, 0.45);
+  font-weight: 700;
+}
+
+.mcp-cam-btn.btn-loop.active {
+  background: #0E7C7B;
+  border-color: #0E7C7B;
+  color: white;
+  box-shadow: 0 0 12px rgba(14, 124, 123, 0.45);
+}
+
+/* Progress bar for 15s recording */
+.mcp-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(164, 168, 209, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+  display: none;
+}
+
+.mcp-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: #0E7C7B;
+  transition: width 0.3s ease;
+}
+
+/* Live Transcripts with Theme */
+.mcp-transcripts-box {
+  background: rgba(26, 23, 26, 0.9);
+  border: 1px solid rgba(164, 168, 209, 0.2);
+  border-radius: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mcp-transcript-row {
+  line-height: 1.4;
+  color: #f1f5f9;
+}
+
+.mcp-transcript-speaker {
+  font-weight: 700;
+  color: #0E7C7B;
+  margin-right: 4px;
+}
+
+.mcp-transcript-time {
+  font-size: 9px;
+  color: #A4A8D1;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+/* Summarize Button with Theme */
+.mcp-summarize-btn {
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #0E7C7B 0%, #517664 100%);
+  color: white;
+  border: 1px solid rgba(14, 124, 123, 0.6);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(14, 124, 123, 0.3);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.mcp-summarize-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.mcp-summarize-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+/* AI Summary Result Modal */
+.mcp-summary-result {
+  background: rgba(26, 23, 26, 0.95);
+  border: 1px solid rgba(14, 124, 123, 0.5);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #f1f5f9;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+/* Custom Keybind Badges */
+.mcp-key-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(34, 30, 34, 0.7);
+  border: 1px solid rgba(164, 168, 209, 0.35);
+  color: #A4A8D1;
+  margin-left: 4px;
+  text-transform: uppercase;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Floating In-Meeting Keybind Toast Notification */
+#mcp-key-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: rgba(34, 30, 34, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid #0E7C7B;
+  color: #f8fafc;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(14, 124, 123, 0.4);
+  z-index: 2147483647;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#mcp-key-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(6px);
+}
+
+#mcp-key-toast.toast-freeze {
+  border-color: #A4A8D1;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 18px rgba(164, 168, 209, 0.4);
+}
+
+#mcp-key-toast.toast-live {
+  border-color: #517664;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 18px rgba(81, 118, 100, 0.4);
+}
+
