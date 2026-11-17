@@ -203,6 +203,10 @@
     const hud = document.createElement('div');
     hud.id = 'meet-copilot-hud';
     hud.innerHTML = `
+      <div class="mcp-drag-edge mcp-drag-top" title="Drag HUD"></div>
+      <div class="mcp-drag-edge mcp-drag-bottom" title="Drag HUD"></div>
+      <div class="mcp-drag-edge mcp-drag-left" title="Drag HUD"></div>
+      <div class="mcp-drag-edge mcp-drag-right" title="Drag HUD"></div>
       <div class="mcp-header" id="mcp-drag-handle">
         <div class="mcp-title">
           <div class="mcp-logo-badge">
@@ -222,8 +226,8 @@
         <!-- Camera Controls -->
         <div class="mcp-cam-section">
           <div class="mcp-section-title">
-            <span>Camera Camouflage</span>
-            <span id="mcp-cam-label" style="color: #38bdf8;">Webcam Live</span>
+            <span>Camera Controls</span>
+            <span id="mcp-cam-label" style="color: #A4A8D1;">Webcam Live</span>
           </div>
           <div class="mcp-btn-grid">
             <button class="mcp-cam-btn active" id="mcp-btn-live" title="Resume live camera">
@@ -238,7 +242,7 @@
               <span>🔄 Loop 15s</span>
             </button>
           </div>
-          <button class="mcp-cam-btn" id="mcp-btn-record" style="margin-top: 4px; padding: 6px 10px; font-size: 10px; border-style: dashed; color: #94a3b8; width: 100%;">
+          <button class="mcp-cam-btn" id="mcp-btn-record" style="margin-top: 4px; padding: 6px 10px; font-size: 10px; border-style: dashed; border-color: rgba(164, 168, 209, 0.3); color: #A4A8D1; width: 100%;">
             <span>🔴 Record Fresh 15s Clip</span>
           </button>
           <div class="mcp-progress-bar" id="mcp-prog-bar">
@@ -274,49 +278,93 @@
 
         <!-- Summary Modal Result -->
         <div class="mcp-summary-result" id="mcp-summary-result" style="display: none;">
-          <div style="font-weight: 700; color: #818cf8; margin-bottom: 6px;">Meeting Minutes & Action Items</div>
+          <div style="font-weight: 700; color: #A4A8D1; margin-bottom: 6px;">Meeting Minutes & Action Items</div>
           <div id="mcp-summary-text"></div>
         </div>
       </div>
     `;
     (document.body || document.documentElement).appendChild(hud);
 
-    // Wire Dragging
-    const dragHandle = document.getElementById('mcp-drag-handle');
+    // Wire Full-HUD & Edge Dragging with Strict Viewport Clamping
+    // Keeps HUD safely below top Chrome/Meet bars and inside screen bounds
+    const TOP_SAFE_MARGIN = 16;
+    const EDGE_SAFE_MARGIN = 12;
     let isDragging = false;
     let startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
-    dragHandle.addEventListener('mousedown', (e) => {
-      if (e.target && (e.target.tagName === 'BUTTON' || e.target.closest('button'))) return;
+    function clampHudToViewport(rawLeft, rawTop) {
+      const rect = hud.getBoundingClientRect();
+      const width = rect.width || hud.offsetWidth || 380;
+      const height = rect.height || hud.offsetHeight || 52;
+      const maxLeft = Math.max(EDGE_SAFE_MARGIN, window.innerWidth - width - EDGE_SAFE_MARGIN);
+      const maxTop = Math.max(TOP_SAFE_MARGIN, window.innerHeight - height - EDGE_SAFE_MARGIN);
+      const clampedLeft = Math.min(Math.max(rawLeft, EDGE_SAFE_MARGIN), maxLeft);
+      const clampedTop = Math.min(Math.max(rawTop, TOP_SAFE_MARGIN), maxTop);
+      return { left: clampedLeft, top: clampedTop };
+    }
+
+    function applyHudPosition(rawLeft, rawTop) {
+      const { left, top } = clampHudToViewport(rawLeft, rawTop);
+      hud.style.bottom = 'auto';
+      hud.style.right = 'auto';
+      hud.style.left = `${left}px`;
+      hud.style.top = `${top}px`;
+    }
+
+    hud.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // Left mouse drag only (preserves Mouse 3/4 shortcuts)
+
+      const target = e.target;
+      const isEdgeHandle = target && target.classList && target.classList.contains('mcp-drag-edge');
+      // Allow dragging from ANY edge strip OR any non-interactive surface of the HUD
+      if (
+        !isEdgeHandle &&
+        target &&
+        target.closest('button, a, input, textarea, select, [role="button"], .mcp-transcripts-box, .mcp-summary-result')
+      ) {
+        return;
+      }
+
+      e.preventDefault();
       isDragging = true;
+      hud.classList.add('dragging');
       startX = e.clientX;
       startY = e.clientY;
       const rect = hud.getBoundingClientRect();
       startLeft = rect.left;
       startTop = rect.top;
-      hud.style.bottom = 'auto';
-      hud.style.right = 'auto';
-      hud.style.left = `${startLeft}px`;
-      hud.style.top = `${startTop}px`;
+      applyHudPosition(startLeft, startTop);
     });
 
     window.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      hud.style.left = `${startLeft + dx}px`;
-      hud.style.top = `${startTop + dy}px`;
+      applyHudPosition(startLeft + dx, startTop + dy);
     });
 
     window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
       isDragging = false;
+      hud.classList.remove('dragging');
+      const rect = hud.getBoundingClientRect();
+      applyHudPosition(rect.left, rect.top);
     });
 
-    // Spotlight pointer glow tracking across HUD
+    window.addEventListener('resize', () => {
+      if (hud.style.left && hud.style.top) {
+        const rect = hud.getBoundingClientRect();
+        applyHudPosition(rect.left, rect.top);
+      }
+    });
+
+    // Rainbow spotlight pointer glow tracking across HUD
     hud.addEventListener('mousemove', (e) => {
       const rect = hud.getBoundingClientRect();
+      const hue = (((e.clientX / Math.max(window.innerWidth, 1)) * 360) + ((e.clientY / Math.max(window.innerHeight, 1)) * 180)) % 360;
       hud.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
       hud.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
+      hud.style.setProperty('--spot-hue', hue.toFixed(1));
     });
 
     // Wire HUD Controls
@@ -344,10 +392,16 @@
     }
     btnSummarize.onclick = handleSummarizeRequest;
 
-    // Smooth HUD minimize / expand
+    // Smooth HUD minimize / expand + keep clamped in viewport after size change
     btnMinimize.onclick = (e) => {
       e.stopPropagation();
       hud.classList.toggle('minimized');
+      if (hud.style.left && hud.style.top) {
+        setTimeout(() => {
+          const rect = hud.getBoundingClientRect();
+          applyHudPosition(rect.left, rect.top);
+        }, 360);
+      }
     };
 
     // Dedicated Transcripts box minimize / expand
@@ -367,11 +421,18 @@
     sendCommandToInjector('GET_STATUS');
   }
 
+  function formatHudKeyBadge(rawKey, fallback) {
+    const clean = (rawKey || fallback).trim().toUpperCase();
+    if (clean === 'MOUSE 3' || clean === 'MOUSE3') return 'M3';
+    if (clean === 'MOUSE 4' || clean === 'MOUSE4') return 'M4';
+    return clean;
+  }
+
   function updateHudKeyBadges() {
     const bFreeze = document.getElementById('mcp-badge-freeze');
     const bLive = document.getElementById('mcp-badge-live');
-    if (bFreeze) bFreeze.textContent = (freezeKey || 'F').toUpperCase();
-    if (bLive) bLive.textContent = (liveKey || 'L').toUpperCase();
+    if (bFreeze) bFreeze.textContent = formatHudKeyBadge(freezeKey, 'F');
+    if (bLive) bLive.textContent = formatHudKeyBadge(liveKey, 'L');
   }
 
   function sendCommandToInjector(command) {
@@ -414,15 +475,15 @@
       progBar.style.display = 'none';
     } else if (cameraState.mode === 'frozen') {
       badge.textContent = 'Frozen';
-      badge.style.color = '#2dd4bf';
-      badge.style.background = 'rgba(45, 212, 191, 0.2)';
+      badge.style.color = '#A4A8D1';
+      badge.style.background = 'rgba(164, 168, 209, 0.18)';
       camLabel.textContent = 'Camera Paused';
       btnFreeze.classList.add('active');
       progBar.style.display = 'none';
     } else {
       badge.textContent = 'Live';
-      badge.style.color = '#7dd3fc';
-      badge.style.background = 'rgba(56, 189, 248, 0.15)';
+      badge.style.color = '#87b8a0';
+      badge.style.background = 'rgba(81, 118, 100, 0.22)';
       camLabel.textContent = 'Webcam Live';
       btnLive.classList.add('active');
       progBar.style.display = 'none';
@@ -524,7 +585,7 @@
     const resultText = document.getElementById('mcp-summary-text');
 
     if (!transcriptLog || transcriptLog.length === 0) {
-      showKeyToast('Turn on Meet captions (CC) and let people speak first.', 'freeze');
+      showKeyToast('Enable Meet Captions (CC) first to log speech before summarizing.', 'freeze');
       return;
     }
 
@@ -545,7 +606,7 @@
       if (!response || !response.ok) {
         resultText.innerHTML = response?.error === 'MISSING_API_KEY'
           ? `<span style="color: #fbbf24;">Add a Gemini API key in the PhantomCam popup
-               (<strong>Settings &rarr; Custom Gemini API key</strong>) to generate summaries.</span>`
+               (<strong>Settings &rarr; Gemini API Key</strong>) to generate summaries.</span>`
           : `<span style="color: #f87171;">Summary failed: ${escapeHtml(response?.error || 'unknown error')}</span>`;
       } else {
         resultText.innerHTML = formatMarkdown(response.text);

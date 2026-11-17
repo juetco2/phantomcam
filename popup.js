@@ -51,14 +51,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnRebindFreeze = document.getElementById('btnRebindFreeze');
   const btnRebindLive = document.getElementById('btnRebindLive');
   const btnResetKeybinds = document.getElementById('btnResetKeybinds');
-  const btnPresetMouse = document.getElementById('btnPresetMouse');
-  const mouseOverrideNotice = document.getElementById('mouseOverrideNotice');
-  const keyCollisionWarning = document.getElementById('keyCollisionWarning');
-  const keySaveConfirmMsg = document.getElementById('keySaveConfirmMsg');
+  const shortcutStatusBox = document.getElementById('shortcutStatusBox');
+  const shortcutStatusText = document.getElementById('shortcutStatusText');
 
   let freezeKey = 'F';
   let liveKey = 'L';
   let recordingKeyFor = null; // 'freeze' | 'live' | null
+  let statusResetTimer = null;
 
   // Footer links
   const linkOpenMeet = document.getElementById('linkOpenMeet');
@@ -104,13 +103,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 2800);
   }
 
-  // Pointer-tracking radial spotlight for extension popup cards
+  // Pointer-tracking rainbow radial spotlight for extension popup cards
   document.addEventListener('mousemove', (e) => {
+    const hue = (((e.clientX / 420) * 360) + ((e.clientY / 570) * 180)) % 360;
     const spotlightElements = document.querySelectorAll('.card, .cam-stage');
     spotlightElements.forEach((el) => {
       const rect = el.getBoundingClientRect();
       el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
       el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      el.style.setProperty('--hue', hue.toFixed(1));
     });
   });
 
@@ -231,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Warm studio ambient glow
     const lightX = w * 0.5 + Math.sin(time * 0.6) * 20;
     const rad = context.createRadialGradient(lightX, h * 0.4, 20, lightX, h * 0.4, 300);
-    rad.addColorStop(0, 'rgba(56, 189, 248, 0.15)');
+    rad.addColorStop(0, 'rgba(14, 124, 123, 0.22)');
     rad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     context.fillStyle = rad;
     context.fillRect(0, 0, w, h);
@@ -291,8 +292,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await popupVideo.play().catch(() => {});
       isUsingRealWebcam = true;
       camSourceLabel.textContent = 'Webcam Connected';
-      btnRequestHardwareCam.style.borderColor = '#4ade80';
-      btnRequestHardwareCam.style.color = '#4ade80';
+      btnRequestHardwareCam.style.borderColor = '#517664';
+      btnRequestHardwareCam.style.color = '#87b8a0';
       showToast('Webcam feed connected!');
     } catch (err) {
       console.warn('Webcam permission error:', err);
@@ -307,8 +308,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       popupVideo.srcObject = null;
       isUsingRealWebcam = false;
       camSourceLabel.textContent = 'Use Real Webcam';
-      btnRequestHardwareCam.style.borderColor = '#334155';
-      btnRequestHardwareCam.style.color = '#94a3b8';
+      btnRequestHardwareCam.style.borderColor = 'rgba(164, 168, 209, 0.32)';
+      btnRequestHardwareCam.style.color = '#A4A8D1';
       showToast('Switched to simulated feed');
     } else {
       connectHardwareWebcam();
@@ -319,8 +320,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   connectHardwareWebcam();
 
   // 4. Tab Navigation
+  function cancelKeyRecording() {
+    if (!recordingKeyFor) return;
+    recordingKeyFor = null;
+    if (btnRebindFreeze) btnRebindFreeze.classList.remove('recording');
+    if (btnRebindLive) btnRebindLive.classList.remove('recording');
+    updateKeybindUI();
+  }
+
   tabBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
+      cancelKeyRecording();
       const targetTab = btn.getAttribute('data-tab');
       tabBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
@@ -341,9 +351,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (tabs && tabs.length > 0) {
         activeMeetTab = tabs[0];
         meetConnBadge.textContent = 'Meet Active';
-        meetConnBadge.style.color = '#4ade80';
-        meetConnBadge.style.borderColor = 'rgba(74, 222, 128, 0.4)';
-        meetConnBadge.style.background = 'rgba(74, 222, 128, 0.15)';
+        meetConnBadge.style.color = '#87b8a0';
+        meetConnBadge.style.borderColor = 'rgba(81, 118, 100, 0.55)';
+        meetConnBadge.style.background = 'rgba(81, 118, 100, 0.2)';
 
         meetSyncText.innerHTML = `Connected to Google Meet call (${tabs.length} tab)`;
         btnFocusMeet.style.display = 'block';
@@ -524,7 +534,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       loopBtnLabel.textContent = 'Exit Loop';
       stageBadge.innerHTML = '<span>🔄 15s LOOP ACTIVE</span>';
       telemetryState.textContent = `15s LOOP ACTIVE (${loopFrames.length || 225} FRAMES)`;
-      telemetryState.style.color = '#c084fc';
+      telemetryState.style.color = '#0E7C7B';
       recBar.style.display = 'none';
       modeDescription.textContent = 'The 15-second recorded loop is continuously playing through your camera feed to keep you visibly present in Google Meet.';
     } else if (mode === 'frozen') {
@@ -532,7 +542,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       loopBtnLabel.textContent = '15s Loop';
       stageBadge.innerHTML = '<span>❄ FROZEN FRAME</span>';
       telemetryState.textContent = 'FROZEN (STEPPED AWAY)';
-      telemetryState.style.color = '#2dd4bf';
+      telemetryState.style.color = '#A4A8D1';
       recBar.style.display = 'none';
       modeDescription.textContent = 'Camera is locked on the frozen snapshot frame. You can step away from your computer without showing an empty chair or black screen.';
     } else {
@@ -540,22 +550,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       loopBtnLabel.textContent = '15s Loop';
       stageBadge.innerHTML = '<span>● LIVE FEED</span>';
       telemetryState.textContent = 'LIVE (READY)';
-      telemetryState.style.color = '#4ade80';
+      telemetryState.style.color = '#517664';
       recBar.style.display = 'none';
       modeDescription.textContent = 'Camera feed is live. Click Freeze Frame to pause when stepping away, or 15s Loop to record and play an active presence clip.';
     }
   }
 
   // 10. Load and Save Settings (API Key & Shortcuts)
+  function setShortcutStatus(type, htmlContent) {
+    if (!shortcutStatusBox || !shortcutStatusText) return;
+    shortcutStatusBox.classList.remove('is-warning', 'is-override', 'is-saved');
+    if (type) shortcutStatusBox.classList.add(type);
+    shortcutStatusText.innerHTML = htmlContent;
+  }
+
+  function renderDefaultShortcutStatus() {
+    const hasMouse = freezeKey.toLowerCase().includes('mouse') || liveKey.toLowerCase().includes('mouse');
+    if (hasMouse) {
+      setShortcutStatus(
+        'is-override',
+        '⚡ Mouse 3 / 4 override active (blocks Back/Forward).'
+      );
+    } else {
+      setShortcutStatus(
+        '',
+        'Click a button, then press any key or Mouse 3 / 4.'
+      );
+    }
+  }
+
   function updateKeybindUI() {
     if (popBadgeLive) popBadgeLive.textContent = liveKey;
     if (popBadgeFreeze) popBadgeFreeze.textContent = freezeKey;
-    if (btnRebindFreeze) btnRebindFreeze.textContent = freezeKey;
-    if (btnRebindLive) btnRebindLive.textContent = liveKey;
-    if (mouseOverrideNotice) {
-      const hasMouse = freezeKey.toLowerCase().includes('mouse') || liveKey.toLowerCase().includes('mouse');
-      mouseOverrideNotice.style.display = hasMouse ? 'block' : 'none';
-    }
+    if (btnRebindFreeze && recordingKeyFor !== 'freeze') btnRebindFreeze.textContent = freezeKey;
+    if (btnRebindLive && recordingKeyFor !== 'live') btnRebindLive.textContent = liveKey;
+
+    renderDefaultShortcutStatus();
   }
 
   if (chrome.storage && chrome.storage.local) {
@@ -584,10 +614,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const key = customApiKeyInput.value.trim();
     customApiKey = key;
     chrome.storage.local.set({ geminiApiKey: key }, () => {
-      saveConfirmMsg.style.display = 'block';
+      if (saveConfirmMsg) saveConfirmMsg.style.opacity = '1';
       showToast('Settings saved successfully!');
       setTimeout(() => {
-        saveConfirmMsg.style.display = 'none';
+        if (saveConfirmMsg) saveConfirmMsg.style.opacity = '0';
       }, 2500);
     });
   });
@@ -596,52 +626,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnRebindFreeze) {
     btnRebindFreeze.addEventListener('click', () => {
       if (recordingKeyFor === 'freeze') {
-        recordingKeyFor = null;
-        btnRebindFreeze.classList.remove('recording');
-        btnRebindFreeze.textContent = freezeKey;
+        cancelKeyRecording();
         return;
       }
       recordingKeyFor = 'freeze';
       btnRebindFreeze.classList.add('recording');
-      btnRebindFreeze.textContent = 'Click mouse/key...';
+      btnRebindFreeze.textContent = 'Press key/mouse';
       if (btnRebindLive) {
         btnRebindLive.classList.remove('recording');
         btnRebindLive.textContent = liveKey;
       }
-      if (keyCollisionWarning) keyCollisionWarning.style.display = 'none';
+      setShortcutStatus('is-override', 'Listening for Freeze... (Esc to cancel)');
     });
   }
 
   if (btnRebindLive) {
     btnRebindLive.addEventListener('click', () => {
       if (recordingKeyFor === 'live') {
-        recordingKeyFor = null;
-        btnRebindLive.classList.remove('recording');
-        btnRebindLive.textContent = liveKey;
+        cancelKeyRecording();
         return;
       }
       recordingKeyFor = 'live';
       btnRebindLive.classList.add('recording');
-      btnRebindLive.textContent = 'Click mouse/key...';
+      btnRebindLive.textContent = 'Press key/mouse';
       if (btnRebindFreeze) {
         btnRebindFreeze.classList.remove('recording');
         btnRebindFreeze.textContent = freezeKey;
       }
-      if (keyCollisionWarning) keyCollisionWarning.style.display = 'none';
-    });
-  }
-
-  if (btnPresetMouse) {
-    btnPresetMouse.addEventListener('click', () => {
-      recordingKeyFor = null;
-      freezeKey = 'Mouse 3';
-      liveKey = 'Mouse 4';
-      if (btnRebindFreeze) btnRebindFreeze.classList.remove('recording');
-      if (btnRebindLive) btnRebindLive.classList.remove('recording');
-      if (keyCollisionWarning) keyCollisionWarning.style.display = 'none';
-      updateKeybindUI();
-      saveKeybinds();
-      showToast('Bound Mouse 3 (Freeze) & Mouse 4 (Live)!');
+      setShortcutStatus('is-override', 'Listening for Live... (Esc to cancel)');
     });
   }
 
@@ -652,7 +664,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       liveKey = 'L';
       if (btnRebindFreeze) btnRebindFreeze.classList.remove('recording');
       if (btnRebindLive) btnRebindLive.classList.remove('recording');
-      if (keyCollisionWarning) keyCollisionWarning.style.display = 'none';
       updateKeybindUI();
       saveKeybinds();
     });
@@ -664,12 +675,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         phantomcamFreezeKey: freezeKey,
         phantomcamLiveKey: liveKey
       }, () => {
-        if (keySaveConfirmMsg) {
-          keySaveConfirmMsg.style.display = 'block';
-          setTimeout(() => {
-            keySaveConfirmMsg.style.display = 'none';
-          }, 2400);
-        }
+        if (statusResetTimer) clearTimeout(statusResetTimer);
+        setShortcutStatus('is-saved', `✓ Shortcuts saved: Freeze <strong>[${escapeHtml(freezeKey)}]</strong> &amp; Live <strong>[${escapeHtml(liveKey)}]</strong>.`);
+        statusResetTimer = setTimeout(() => {
+          renderDefaultShortcutStatus();
+        }, 2400);
         showToast(`Shortcuts set: Freeze [${freezeKey}], Live [${liveKey}]`);
       });
     }
@@ -687,7 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (recordingKeyFor) {
         if (recordingKeyFor === 'freeze') {
           if (mouseKeyName === liveKey) {
-            if (keyCollisionWarning) keyCollisionWarning.style.display = 'block';
+            setShortcutStatus('is-warning', '⚠️ Freeze and Live cannot share the same button. Choose a distinct key or Mouse button.');
             return;
           }
           freezeKey = mouseKeyName;
@@ -697,7 +707,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           saveKeybinds();
         } else if (recordingKeyFor === 'live') {
           if (mouseKeyName === freezeKey) {
-            if (keyCollisionWarning) keyCollisionWarning.style.display = 'block';
+            setShortcutStatus('is-warning', '⚠️ Freeze and Live cannot share the same button. Choose a distinct key or Mouse button.');
             return;
           }
           liveKey = mouseKeyName;
@@ -742,17 +752,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Window key listener inside popup (for rebind capture & instant trigger)
   window.addEventListener('keydown', (e) => {
     if (recordingKeyFor) {
-      e.preventDefault();
-      e.stopPropagation();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelKeyRecording();
+        return;
+      }
 
       // Skip modifier keys
-      if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
 
       const newKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
 
       if (recordingKeyFor === 'freeze') {
         if (newKey === liveKey) {
-          if (keyCollisionWarning) keyCollisionWarning.style.display = 'block';
+          setShortcutStatus('is-warning', '⚠️ Freeze and Live cannot share the same key. Choose a distinct key.');
           return;
         }
         freezeKey = newKey;
@@ -762,7 +778,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveKeybinds();
       } else if (recordingKeyFor === 'live') {
         if (newKey === freezeKey) {
-          if (keyCollisionWarning) keyCollisionWarning.style.display = 'block';
+          setShortcutStatus('is-warning', '⚠️ Freeze and Live cannot share the same key. Choose a distinct key.');
           return;
         }
         liveKey = newKey;

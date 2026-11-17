@@ -93,11 +93,20 @@ feed, just with the ability to substitute frames.
 | Freeze | `F` |
 | Resume live | `L` |
 
-Rebind both in **Settings**. Mouse side buttons are supported: the **Mouse 3 / 4 preset**
-maps back/forward buttons to Freeze and Live. PhantomCam swallows those buttons inside the
-Meet tab and the popup so they never navigate the browser away from your call.
+Rebind both in **Settings** — click a binding, then press any key or a mouse side button.
+The status line under the bindings tells you what it's listening for, warns if both actions
+end up on the same input, and confirms each save. Mouse side buttons work too (they display
+as **M3** / **M4** on the HUD badges). PhantomCam swallows those buttons inside the Meet tab
+and the popup so they never navigate the browser away from your call.
 
 Shortcuts are ignored while you are typing in chat, notes, or any text field.
+
+### Moving the HUD
+
+Drag the PhantomCam HUD by its header, its outer edges, or any non-interactive part of the
+panel. It is clamped to the viewport so it can't be dragged off-screen or under Meet's top
+bar, and it re-clamps itself after a window resize or a minimize/expand. The subtle rainbow
+glow follows your pointer.
 
 ### Transcripts and summaries
 
@@ -116,7 +125,7 @@ The transcript is plain text and stays in your browser until you send it for sum
 ### Gemini API key
 
 Summarization needs a key. Get one from [Google AI Studio](https://aistudio.google.com/apikey),
-then paste it into the popup under **Settings → Custom Gemini API key**.
+then paste it into the popup under **Settings → Gemini API Key**.
 
 - Stored with `chrome.storage.local`: local to this browser profile, not synced to your
   Google account, not readable by websites.

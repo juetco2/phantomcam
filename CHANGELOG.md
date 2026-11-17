@@ -4,6 +4,48 @@ All notable changes to PhantomCam are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-11-17
+
+Merges the "renewed" interface rework into the 1.1.0 engine. The renewed build was made
+from the original 1.0.0 source, so all 1.1.0 fixes had to be re-applied on top of it —
+none of the correctness work below was reverted.
+
+### Added
+
+- **Edge dragging.** The HUD has four invisible edge strips plus any non-interactive
+  surface as a drag target, instead of only the title bar.
+- **Viewport clamping.** `clampHudToViewport()` keeps the panel inside the window, with a
+  16 px top margin so it can't slide under browser or Meet chrome. Position is re-clamped
+  after dragging, window resize, and minimize/expand.
+- **Rainbow spotlight.** The pointer glow now tracks hue from cursor position in both the
+  HUD (`--spot-hue`) and the popup cards (`--hue`), with a matching border glow on cards.
+- **Mouse bindings shown as badges.** `formatHudKeyBadge()` renders `M3` / `M4` instead of
+  `MOUSE 3` on the HUD key badges.
+- **Shortcut status line.** Replaces the old collision banner, mouse-override notice and
+  save confirmation with one line that reports listening, warning, saved and override
+  states.
+- Popup entrance animation (`popupFadeIn`, `tabReveal`), card hover elevation, and compact
+  "Extension Engine" info card.
+
+### Changed
+
+- Popup palette reworked to teal / lavender (`#0E7C7B`, `#A4A8D1`, `#517664`) on a warm
+  near-black background, matching the HUD.
+- Keybind settings simplified to two rebind rows (`Freeze Camera`, `Return to Live`) plus
+  the status line. The separate "Mouse 3 / 4 preset" button is gone; mouse buttons are
+  bound by pressing them during rebind.
+- `icon.png` artwork replaced and regenerated at correct 16/48/128/256 px sizes.
+
+### Fixed
+
+- Re-applied every 1.1.0 fix that the renewed build lacked: the `handleLiveAction` crash,
+  the invalid `gemini-3.8-flash` model, Gemini calls via the service worker (CORS), escaped
+  model output, single injector execution, transcript persistence, debounced caption
+  scanning, the `progBar` null guard, and unused permissions.
+- Removed the renewed build's dead Companion Simulator link (`*.run.app`) and its unused
+  `popupLoopVideo` element.
+- `escapeHtml()` now coerces non-string input instead of throwing.
+
 ## [1.1.0] — 2026-11-10
 
 First public release. The camera engine is unchanged in behaviour from the 1.0.0 build;
